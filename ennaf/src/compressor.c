@@ -4,9 +4,10 @@
  * See README.md and LICENSE files of this repository
  */
 
-static ZSTD_CStream* create_zstd_cstream(int level, int window_size_log)
+static ZSTD_seekable_CStream* create_zstd_cstream(int level, int window_size_log)
 {
-    ZSTD_CStream *s = ZSTD_createCStream();
+    //ZSTD_CStream *s = ZSTD_createCStream();
+    ZSTD_seekable_CStream* *s = ZSTD_seekable_createCStream();
     if (s == NULL) { die("ZSTD_createCStream() error\n"); }
 
     if (window_size_log != 0)
@@ -15,7 +16,9 @@ static ZSTD_CStream* create_zstd_cstream(int level, int window_size_log)
         ZSTD_TRY(ZSTD_CCtx_setParameter(s, ZSTD_c_windowLog, window_size_log));
     }
 
-    size_t const initResult = ZSTD_initCStream(s, level);
+    //size_t const initResult = ZSTD_initCStream(s, level);
+    size_t const initResult = ZSTD_seekable_initCStream(s, level, 1, 1024 * 1024);//1024 * 1024=framesize of 1 mb?
+    
     if (ZSTD_isError(initResult)) { die("ZSTD_initCStream() error: %s\n", ZSTD_getErrorName(initResult)); }
     return s;
 }
@@ -129,7 +132,7 @@ static inline void compress(compressor_t *w, const void *data, size_t size)
         assert(w->fill < w->allocated);
 
         ZSTD_outBuffer output = { w->buf + w->fill, w->allocated - w->fill, 0 };
-        size_t toRead = ZSTD_compressStream(w->cstream, &output, &input);
+        size_t toRead = ZSTD_seekable_compressStream(w->cstream, &output, &input);
         if (ZSTD_isError(toRead)) { die("ZSTD_compressStream() error: %s\n", ZSTD_getErrorName(toRead)); }
         w->fill += output.pos;
         w->compressed_size += output.pos;

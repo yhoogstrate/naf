@@ -12,6 +12,11 @@
 #include "encoders.h"
 #include "tables.c"
 
+#include "zstd_seekable_utils.h"
+#include "zstdseek_compress.c"
+#include "zstdseek_utils.c"
+
+
 #define UNCOMPRESSED_BUFFER_SIZE (1ull * 1000 * 1000)
 #define COMPRESSED_BUFFER_SIZE (2ull * 1000 * 1000)
 
