@@ -18,11 +18,11 @@
 #include <zstd_errors.h>
 #include <unistd.h>
 
-#include <cstdlib> // random nr
+//#include <cstdlib> // random nr
 
  
 #include "zstd_seekable.h"
-#include "zstd_seekable_utils.hpp"
+#include "zstd_seekable_utils.h"
 
 
 //#define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -154,14 +154,14 @@ size_t ZSTD_seekable_compressFile_orDie(const char* fname,
 
 
 
-ZSTD_seekable_decompress_init_data* ZSTD_seekable_decompressFile_init(const char* fname)
-{
-    //FILE* const fin  = fopen_orDie(fname, "rb");
+//ZSTD_seekable_decompress_init_data* ZSTD_seekable_decompressFile_init(const char* fname)
+//{
+    ////FILE* const fin  = fopen_orDie(fname, "rb");
     
-    return new ZSTD_seekable_decompress_init_data{
-        fopen_orDie(fname, "rb") 
-    };
-}
+    //return new ZSTD_seekable_decompress_init_data{
+        //fopen_orDie(fname, "rb") 
+    //};
+//}
 
 
 
@@ -169,120 +169,120 @@ ZSTD_seekable_decompress_init_data* ZSTD_seekable_decompressFile_init(const char
 
 
 
-size_t ZSTD_seekable_decompressFile_orDie(ZSTD_seekable_decompress_init_data* fh, off_t startOffset, char* buffer, off_t endOffset)
-{
-    //printf("[%i] Read raw zstd seekable [re-using fin] ... \n", msgid);
-    size_t written = 0;
+//size_t ZSTD_seekable_decompressFile_orDie(ZSTD_seekable_decompress_init_data* fh, off_t startOffset, char* buffer, off_t endOffset)
+//{
+    ////printf("[%i] Read raw zstd seekable [re-using fin] ... \n", msgid);
+    //size_t written = 0;
   
-    if(fh->fin == NULL) {
-        printf("fin == NULL: YES!!\n");
-        exit(124);
-    }
-    //else {
-    //   printf("[%i]  == NULL: no\n",msgid);
+    //if(fh->fin == NULL) {
+        //printf("fin == NULL: YES!!\n");
+        //exit(124);
     //}
+    ////else {
+    ////   printf("[%i]  == NULL: no\n",msgid);
+    ////}
 
-    if (feof(fh->fin)) {
-      printf ("!!!! FEOF !!!!! \n");
-      exit(123);
-    }
-    //else {
-    //    printf ("[%i] no feof\n",msgid);
+    //if (feof(fh->fin)) {
+      //printf ("!!!! FEOF !!!!! \n");
+      //exit(123);
     //}
-    //printf("[%i] ftell: %i\n",msgid, ftell(fh->fin));
-    fseek_orDie(fh->fin,0, SEEK_SET);
-    //printf("[%i] ftell post fseek: %i\n",msgid, ftell(fh->fin));
+    ////else {
+    ////    printf ("[%i] no feof\n",msgid);
+    ////}
+    ////printf("[%i] ftell: %i\n",msgid, ftell(fh->fin));
+    //fseek_orDie(fh->fin,0, SEEK_SET);
+    ////printf("[%i] ftell post fseek: %i\n",msgid, ftell(fh->fin));
     
 
-    size_t const buffOutSize = ZSTD_DStreamOutSize();  // Guarantee to successfully flush at least one complete compressed block in all circumstances.
-    char* const buffOut = (char*) malloc_orDie(buffOutSize);
+    //size_t const buffOutSize = ZSTD_DStreamOutSize();  // Guarantee to successfully flush at least one complete compressed block in all circumstances.
+    //char* const buffOut = (char*) malloc_orDie(buffOutSize);
 
-    ZSTD_seekable* const seekable = ZSTD_seekable_create();
-    if (seekable==NULL) { fprintf(stderr, "ZSTD_seekable_create() error \n"); exit(10); }
+    //ZSTD_seekable* const seekable = ZSTD_seekable_create();
+    //if (seekable==NULL) { fprintf(stderr, "ZSTD_seekable_create() error \n"); exit(10); }
 
-    size_t const initResult = ZSTD_seekable_initFile(seekable, fh->fin);
-    if (ZSTD_isError(initResult)) { fprintf(stderr, "ZSTD_seekable_init() error : %s \n", ZSTD_getErrorName(initResult)); exit(11); }
+    //size_t const initResult = ZSTD_seekable_initFile(seekable, fh->fin);
+    //if (ZSTD_isError(initResult)) { fprintf(stderr, "ZSTD_seekable_init() error : %s \n", ZSTD_getErrorName(initResult)); exit(11); }
 
-    size_t maxFileSize = ZSTD_seekable_getFileDecompressedSize(seekable);
-    endOffset = std::min( (size_t) endOffset, maxFileSize); // avoid out of boundary requests
+    //size_t maxFileSize = ZSTD_seekable_getFileDecompressedSize(seekable);
+    //endOffset = std::min( (size_t) endOffset, maxFileSize); // avoid out of boundary requests
 
-    size_t buffer_out_i = 0;
-    while (startOffset < endOffset) {
-        size_t const result = ZSTD_seekable_decompress(seekable, buffOut, std::min((size_t) endOffset - startOffset, buffOutSize), (size_t) startOffset);
+    //size_t buffer_out_i = 0;
+    //while (startOffset < endOffset) {
+        //size_t const result = ZSTD_seekable_decompress(seekable, buffOut, std::min((size_t) endOffset - startOffset, buffOutSize), (size_t) startOffset);
 
-        if (ZSTD_isError(result)) {
-            fprintf(stderr, "ZSTD_seekable_decompress() error : %s \n",
-                    ZSTD_getErrorName(result));
-            exit(12);
-        }
+        //if (ZSTD_isError(result)) {
+            //fprintf(stderr, "ZSTD_seekable_decompress() error : %s \n",
+                    //ZSTD_getErrorName(result));
+            //exit(12);
+        //}
 
-        for(size_t i = 0; i < result; i++) {
-            buffer[buffer_out_i] = buffOut[i];
-            buffer_out_i++;
-        }
+        //for(size_t i = 0; i < result; i++) {
+            //buffer[buffer_out_i] = buffOut[i];
+            //buffer_out_i++;
+        //}
 
-        startOffset += result;
-        written += result;
-    }
+        //startOffset += result;
+        //written += result;
+    //}
 
-    ZSTD_seekable_free(seekable);
+    //ZSTD_seekable_free(seekable);
+    ////fclose_orDie(fin);
+    //free(buffOut);
+    
+    
+    ////fh->fin_locked = false;
+
+    //return written;
+//}
+
+
+
+
+
+
+//size_t ZSTD_seekable_decompressFile_orDie(const char* fname, off_t startOffset, char* buffer, off_t endOffset)
+//{
+    //printf("Read raw zstd seekable [+ new fin] ... \n");
+    //size_t written = 0;
+
+    //FILE* const fin  = fopen_orDie(fname, "rb");
+    //size_t const buffOutSize = ZSTD_DStreamOutSize();  // Guarantee to successfully flush at least one complete compressed block in all circumstances.
+    //char* const buffOut = (char*) malloc_orDie(buffOutSize);
+
+    //ZSTD_seekable* const seekable = ZSTD_seekable_create();
+    //if (seekable==NULL) { fprintf(stderr, "ZSTD_seekable_create() error \n"); exit(10); }
+
+    //size_t const initResult = ZSTD_seekable_initFile(seekable, fin);
+    //if (ZSTD_isError(initResult)) { fprintf(stderr, "ZSTD_seekable_init() error : %s \n", ZSTD_getErrorName(initResult)); exit(11); }
+
+    //size_t maxFileSize = ZSTD_seekable_getFileDecompressedSize(seekable);
+    //endOffset = std::min( (size_t) endOffset, maxFileSize); // avoid out of boundary requests
+
+    //size_t buffer_out_i = 0;
+    //while (startOffset < endOffset) {
+        //size_t const result = ZSTD_seekable_decompress(seekable, buffOut, std::min((size_t) endOffset - startOffset, buffOutSize), (size_t) startOffset);
+
+        //if (ZSTD_isError(result)) {
+            //fprintf(stderr, "ZSTD_seekable_decompress() error : %s \n",
+                    //ZSTD_getErrorName(result));
+            //exit(12);
+        //}
+
+        //for(size_t i = 0; i < result; i++) {
+            //buffer[buffer_out_i] = buffOut[i];
+            //buffer_out_i++;
+        //}
+
+        //startOffset += result;
+        //written += result;
+    //}
+
+    //ZSTD_seekable_free(seekable);
     //fclose_orDie(fin);
-    free(buffOut);
-    
-    
-    //fh->fin_locked = false;
+    //free(buffOut);
 
-    return written;
-}
-
-
-
-
-
-
-size_t ZSTD_seekable_decompressFile_orDie(const char* fname, off_t startOffset, char* buffer, off_t endOffset)
-{
-    printf("Read raw zstd seekable [+ new fin] ... \n");
-    size_t written = 0;
-
-    FILE* const fin  = fopen_orDie(fname, "rb");
-    size_t const buffOutSize = ZSTD_DStreamOutSize();  // Guarantee to successfully flush at least one complete compressed block in all circumstances.
-    char* const buffOut = (char*) malloc_orDie(buffOutSize);
-
-    ZSTD_seekable* const seekable = ZSTD_seekable_create();
-    if (seekable==NULL) { fprintf(stderr, "ZSTD_seekable_create() error \n"); exit(10); }
-
-    size_t const initResult = ZSTD_seekable_initFile(seekable, fin);
-    if (ZSTD_isError(initResult)) { fprintf(stderr, "ZSTD_seekable_init() error : %s \n", ZSTD_getErrorName(initResult)); exit(11); }
-
-    size_t maxFileSize = ZSTD_seekable_getFileDecompressedSize(seekable);
-    endOffset = std::min( (size_t) endOffset, maxFileSize); // avoid out of boundary requests
-
-    size_t buffer_out_i = 0;
-    while (startOffset < endOffset) {
-        size_t const result = ZSTD_seekable_decompress(seekable, buffOut, std::min((size_t) endOffset - startOffset, buffOutSize), (size_t) startOffset);
-
-        if (ZSTD_isError(result)) {
-            fprintf(stderr, "ZSTD_seekable_decompress() error : %s \n",
-                    ZSTD_getErrorName(result));
-            exit(12);
-        }
-
-        for(size_t i = 0; i < result; i++) {
-            buffer[buffer_out_i] = buffOut[i];
-            buffer_out_i++;
-        }
-
-        startOffset += result;
-        written += result;
-    }
-
-    ZSTD_seekable_free(seekable);
-    fclose_orDie(fin);
-    free(buffOut);
-
-    return written;
-}
+    //return written;
+//}
 
 
 

@@ -7,7 +7,7 @@
 static ZSTD_seekable_CStream* create_zstd_cstream(int level, int window_size_log)
 {
     //ZSTD_CStream *s = ZSTD_createCStream();
-    ZSTD_seekable_CStream* *s = ZSTD_seekable_createCStream();
+    ZSTD_seekable_CStream *s = ZSTD_seekable_createCStream();
     if (s == NULL) { die("ZSTD_createCStream() error\n"); }
 
     if (window_size_log != 0)
