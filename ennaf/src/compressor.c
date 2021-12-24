@@ -10,11 +10,13 @@ static ZSTD_seekable_CStream* create_zstd_cstream(int level, int window_size_log
     ZSTD_seekable_CStream *s = ZSTD_seekable_createCStream();
     if (s == NULL) { die("ZSTD_createCStream() error\n"); }
 
+    /* does not work with seekable stream pointer?
     if (window_size_log != 0)
     {
         ZSTD_TRY(ZSTD_CCtx_setParameter(s, ZSTD_c_enableLongDistanceMatching, 1));
         ZSTD_TRY(ZSTD_CCtx_setParameter(s, ZSTD_c_windowLog, window_size_log));
     }
+    */
 
     //size_t const initResult = ZSTD_initCStream(s, level);
     size_t const initResult = ZSTD_seekable_initCStream(s, level, 1, 1024 * 1024);//1024 * 1024=framesize of 1 mb?
@@ -82,7 +84,7 @@ static void compressor_end_stream(compressor_t *w)
         }
 
         ZSTD_outBuffer output = { w->buf + w->fill, w->allocated - w->fill, 0 };
-        size_t const remainingToFlush = ZSTD_endStream(w->cstream, &output);
+        size_t const remainingToFlush = ZSTD_seekable_endStream(w->cstream, &output);
         if (remainingToFlush != 0) { die("can't end zstd stream\n"); }
         w->fill += output.pos;
         w->compressed_size += output.pos;

@@ -106,7 +106,8 @@ typedef struct {
     unsigned long long uncompressed_size;
     unsigned long long compressed_size;
     unsigned long long written;
-    ZSTD_CStream *cstream;
+    //ZSTD_CStream *cstream;
+    ZSTD_seekable_CStream *cstream;
     FILE *file;
     char *path;
     unsigned char *buf;
