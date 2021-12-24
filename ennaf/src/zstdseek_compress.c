@@ -12,12 +12,13 @@
 #include <assert.h>
 
 #define XXH_STATIC_LINKING_ONLY
-#include "linux/xxhash.h"
 
 #define ZSTD_STATIC_LINKING_ONLY
+#include "common/xxhash.h"
+
 #include "zstd.h"
 #include "zstd_errors.h"
-#include "mem.h"
+#include "common/mem.h"
 #include "zstd_seekable.h"
 
 #define CHECK_Z(f) { size_t const ret = (f); if (ret != 0) return ret; }
