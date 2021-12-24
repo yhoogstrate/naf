@@ -12,6 +12,7 @@
 #include <assert.h>
 
 #define XXH_STATIC_LINKING_ONLY
+#define XXH_NAMESPACE ZSTD_
 #include "common/xxhash.h"
 
 #define ZSTD_STATIC_LINKING_ONLY

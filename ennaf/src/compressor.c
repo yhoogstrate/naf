@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2021 Kirill Kryukov
  * See README.md and LICENSE files of this repository
  */
+ #include "common/xxhash.h"
 
 static ZSTD_seekable_CStream* create_zstd_cstream(int level, int window_size_log)
 {
