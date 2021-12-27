@@ -349,7 +349,7 @@ static void show_help(void)
         "  --protein          - Input sequence is protein\n"
         "  --text             - Input sequence is text\n"
         "  --strict           - Fail on unexpected input characters\n"
-        "  --store_md5sums     - Store per-sequence md5sums campatible with CRAM/BAM\n"
+        "  --store-md5sums    - Store per-sequence md5sums campatible with CRAM/BAM\n"
         "  --line-length N    - Override line length to N\n"
         "  --verbose          - Verbose mode\n"
         "  --keep-temp-files  - Keep temporary files\n"
@@ -398,7 +398,7 @@ static void parse_command_line(int argc, char **argv)
                 if (!strcmp(argv[i], "--text")) { in_seq_type = seq_type_text; continue; }
                 if (!strcmp(argv[i], "--well-formed")) { assume_well_formed_input = true; continue; }
                 if (!strcmp(argv[i], "--strict")) { abort_on_unexpected_code = true; continue; }
-                if (!strcmp(argv[i], "--store_md5sums")) { store_md5sums = true; continue; }
+                if (!strcmp(argv[i], "--store-md5sums")) { store_md5sums = true; continue; }
             }
 
             if (i < argc - 1)
