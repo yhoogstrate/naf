@@ -496,12 +496,6 @@ static void process_non_well_formed_fasta(void)
                       old_total_seq_size, 
                       seq_size_original + seq.length - old_total_seq_size
                       );
-        //printf("update md5-seq:%s \n\n",seq.data + old_total_seq_size);
-        // unsigned char cur_md5_digest[MD5_DIGEST_LENGTH];
-        // strtoupper per certain buffer size
-        // MD5_Update(&ctx, chunk, written);
-        // MD5_Final(cur_md5_digest, &ctx);
-        //str_append_char(&md5sum, unexpected_name_char_replacement);
 
         add_length(seq_size_original + seq.length - old_total_seq_size);
         n_sequences++;
