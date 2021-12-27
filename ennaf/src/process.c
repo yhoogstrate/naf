@@ -352,10 +352,9 @@ void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, const
         //printf("]\n\n");
 
         
-        // append
+        // append to the md5sum buffer - arguably to be compressed
         for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++)
         {
-            printf("appending char [%i] to MD5 digest stream\n", i);
             str_append_char(&md5sum, md5_digest[i]); // ensure no zero-byte errors appear
         }
     }
