@@ -330,7 +330,7 @@ void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, const
         unsigned char* buffer = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE + 1);
         
         
-        { //memcpy + toupper - currently same size as sequence, should at least be reduced to max buffer size
+        { //memcpy + toupper - iterates over chunks as long as UNCOMPRESSED_BUFFER_SIZE
             const unsigned char *s = str->data + offset;
             unsigned long long n;
             
