@@ -6,6 +6,10 @@
  * The FASTA/Q parser was originally based on Heng Li's kseq.h.
  */
 
+
+#include <openssl/md5.h>
+ 
+
 #define INEOF 256
 
 
@@ -57,6 +61,14 @@ static void qual_writer(unsigned char *str, size_t size)
 }
 
 
+static void md5sum_writer(unsigned char *str, size_t size)
+{
+    // 16 additional bytes each seq
+    //seq_size_original += size; checksums are fixed length, no length(s) needed? 
+    compress(&MD5S, str, size);
+}
+
+
 typedef struct
 {
     size_t length;
@@ -70,6 +82,7 @@ static string_t name    = { 0, NULL, &name_writer };
 static string_t comment = { 0, NULL, &comm_writer };
 static string_t seq     = { 0, NULL, NULL };
 static string_t qual    = { 0, NULL, &qual_writer };
+static string_t md5sum  = { 0, NULL, &md5sum_writer };
 
 
 static void report_unexpected_char_stats(unsigned long long *n, const char *seq_type_name)
@@ -357,9 +370,12 @@ static void process_well_formed_fasta(void)
 
 static void process_non_well_formed_fasta(void)
 {
+    MD5_CTX ctx;
+    printf("process.c :: process_non_well_formed_fasta()\n");
+    
     unsigned c;
     do {
-        // At this point the '>' was already read, so we immediately proceed to read the name.
+        // At this point the '>' has already been read, so we immediately proceed to read the name.
         while ( (c = in_get_until(is_unexpected_text_arr, &name)) != INEOF )
         {
             if (is_space_arr[c]) { break; }
@@ -377,6 +393,11 @@ static void process_non_well_formed_fasta(void)
         }
         str_append_char(&comment, '\0');
 
+        if(store_md5sums) 
+        {
+            printf("flush/re-init md5 hash\n");
+            MD5_Init(&ctx);
+        }
         unsigned long long old_total_seq_size = seq_size_original + seq.length;
         if (c != INEOF)
         {
@@ -419,6 +440,14 @@ static void process_non_well_formed_fasta(void)
                 }
             }
         }
+        
+        // md5sum update
+        printf("update md5-seq:%s \n\n",seq.data + old_total_seq_size);
+        // unsigned char cur_md5_digest[MD5_DIGEST_LENGTH];
+        // strtoupper per certain buffer size
+        // MD5_Update(&ctx, chunk, written);
+        // MD5_Final(cur_md5_digest, &ctx);
+        //str_append_char(&md5sum, unexpected_name_char_replacement);
 
         add_length(seq_size_original + seq.length - old_total_seq_size);
         n_sequences++;
@@ -591,12 +620,17 @@ static void process(void)
     name.data    = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
     comment.data = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
     seq.data     = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
+    if(store_md5sums)
+    {
+        md5sum.data     = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
+    }
 
     seq.writer = no_mask ? ((in_seq_type < seq_type_protein) ? &seq_writer_nonmasked_4bit : &seq_writer_nonmasked_text)
                          : ((in_seq_type < seq_type_protein) ? &seq_writer_masked_4bit : &seq_writer_masked_text);
 
     if (in_format_from_input == in_format_fasta)
     {
+        printf("\n--- --- ---\n\n\n");
         if (assume_well_formed_input) { process_well_formed_fasta(); }
         else { process_non_well_formed_fasta(); }
     }
@@ -612,4 +646,7 @@ static void process(void)
     if (name.length != 0) { name.writer(name.data, name.length); name.length = 0; }
     if (comment.length != 0) { comment.writer(comment.data, comment.length); comment.length = 0; }
     if (seq.length != 0) { seq.writer(seq.data, seq.length); seq.length = 0; }
+    if (md5sum.length != 0) { md5sum.writer(md5sum.data, md5sum.length); md5sum.length = 0; }
+
+    printf("\n\n\n--- --- ---\n");
 }

@@ -114,7 +114,7 @@ compressor_t LEN  = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
 compressor_t MASK = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
 compressor_t SEQ  = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
 compressor_t QUAL = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
-compressor_t MD5  = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL }; // only init pointers when md5sums need to be stored
+compressor_t MD5S = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL }; // only init pointers when md5sums need to be stored
 
 static bool success = false;
 
