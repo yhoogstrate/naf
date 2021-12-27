@@ -327,29 +327,41 @@ static inline void str_append_char(string_t *str, unsigned char c)
 void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, const unsigned long long length) {
     if(store_md5sums) 
     {
-        unsigned char* buffer = (unsigned char *) malloc_or_die(length + 1);
+        unsigned char* buffer = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE + 1);
         
         
-        {//memcpy + toupper - currently same size as sequence, should at least be reduced to max buffer size
-            unsigned long long n = length;
-            unsigned char *d = buffer;
+        { //memcpy + toupper - currently same size as sequence, should at least be reduced to max buffer size
             const unsigned char *s = str->data + offset;
+            unsigned long long n;
+            
+            for(long long unsigned int i = 0;i < (length / UNCOMPRESSED_BUFFER_SIZE); i++) {// full buffer iterations
+                n = UNCOMPRESSED_BUFFER_SIZE;
+                unsigned char *d = buffer;
+                while (n--)
+                {
+                    *d++ = toupper(*s++);
+                }
+                MD5_Update(ctx, buffer, UNCOMPRESSED_BUFFER_SIZE);
+            }
+
+            n = length % UNCOMPRESSED_BUFFER_SIZE;
+            unsigned char *d = buffer;
             while (n--)
             {
                 *d++ = toupper(*s++);
             }
+            MD5_Update(ctx, buffer, length % UNCOMPRESSED_BUFFER_SIZE);
         }
-        
-        MD5_Update(ctx, buffer, length);
         unsigned char md5_digest[MD5_DIGEST_LENGTH];
         MD5_Final(md5_digest, ctx);
 
+
         // print md5 in hexadec
-        //printf("\n[");
-        //for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-            //printf("%02x", md5_digest[i]);
-        //}
-        //printf("]\n\n");
+        printf("\n[");
+        for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+            printf("%02x", md5_digest[i]);
+        }
+        printf("]\n\n");
 
         
         // append to the md5sum buffer - arguably to be compressed
