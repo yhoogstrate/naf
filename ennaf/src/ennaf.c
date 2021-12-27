@@ -349,7 +349,7 @@ static void show_help(void)
         "  --protein          - Input sequence is protein\n"
         "  --text             - Input sequence is text\n"
         "  --strict           - Fail on unexpected input characters\n"
-        "  --store_md5sums     - Store per-sequence md5checksums campatible with CRAM/BAM\n"
+        "  --store_md5sums     - Store per-sequence md5sums campatible with CRAM/BAM\n"
         "  --line-length N    - Override line length to N\n"
         "  --verbose          - Verbose mode\n"
         "  --keep-temp-files  - Keep temporary files\n"
@@ -508,7 +508,7 @@ int main(int argc, char **argv)
     if (store_mask) { compressor_init(&MASK, "mask", 0); }
     compressor_init(&SEQ, "sequence", sequence_window_size_log);
     if (store_qual) { compressor_init(&QUAL, "quality", 0); }
-    if (store_md5sums) { compressor_init(&QUAL, "md5sums", 0); }
+    if (store_md5sums) { compressor_init(&MD5S, "md5sums", 0); }
 
     process();
     close_input_file();

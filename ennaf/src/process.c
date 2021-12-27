@@ -324,6 +324,21 @@ static inline void str_append_char(string_t *str, unsigned char c)
 }
 
 
+void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, unsigned long long length) {
+    if(store_md5sums) 
+    {
+        printf("UNCOMPRESSED_BUFFER_SIZE = %i\n", UNCOMPRESSED_BUFFER_SIZE);
+        // md5sum update
+        printf("update md5-seq:%s \n\n",seq.data + offset);
+        // unsigned char cur_md5_digest[MD5_DIGEST_LENGTH];
+        // strtoupper per certain buffer size
+        // MD5_Update(&ctx, chunk, written);
+        // MD5_Final(cur_md5_digest, &ctx);
+        //str_append_char(&md5sum, unexpected_name_char_replacement);
+    }
+}
+
+
 static void process_well_formed_fasta(void)
 {
     unsigned c;
@@ -441,8 +456,11 @@ static void process_non_well_formed_fasta(void)
             }
         }
         
+        
+        printf("%i + %i - %i = %i\n",seq_size_original, seq.length, old_total_seq_size,seq_size_original + seq.length - old_total_seq_size);
         // md5sum update
-        printf("update md5-seq:%s \n\n",seq.data + old_total_seq_size);
+        //finish_md5sum(ctx, seq, old_total_seq_size);
+        //printf("update md5-seq:%s \n\n",seq.data + old_total_seq_size);
         // unsigned char cur_md5_digest[MD5_DIGEST_LENGTH];
         // strtoupper per certain buffer size
         // MD5_Update(&ctx, chunk, written);
