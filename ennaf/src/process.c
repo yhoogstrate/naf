@@ -8,9 +8,48 @@
 
 
 #include <openssl/md5.h>
- 
+MD5_CTX ctx;
+
 
 #define INEOF 256
+
+
+
+
+typedef struct
+{
+    size_t length;
+    unsigned char *data;
+    void (*writer)(unsigned char *, size_t);
+}
+string_t;
+
+
+
+static string_t md5sum  = { 0, NULL, NULL };
+
+static void md5sum_update(unsigned char *str, size_t size)
+{
+    if(store_md5sums)
+    {
+        const unsigned char *s = str;
+        unsigned long long n = size;
+        unsigned char *d = md5sum.data;
+        while (n--)
+        {
+            *d++ = toupper(*s++);
+        }
+        
+        md5sum.data[size] = '\0';
+        printf("[%s]\n",md5sum.data);
+        
+        
+        MD5_Update(&ctx, md5sum.data, size);
+    }
+}
+
+
+
 
 
 static void name_writer(unsigned char *str, size_t size)
@@ -27,6 +66,8 @@ static void comm_writer(unsigned char *str, size_t size)
 
 static void seq_writer_masked_4bit(unsigned char *str, size_t size)
 {
+    md5sum_update(str, size);
+    
     seq_size_original += size;
     extract_mask(str, size);
     encode_dna(str, size);
@@ -35,6 +76,8 @@ static void seq_writer_masked_4bit(unsigned char *str, size_t size)
 
 static void seq_writer_nonmasked_4bit(unsigned char *str, size_t size)
 {
+    md5sum_update(str, size);
+    
     seq_size_original += size;
     encode_dna(str, size);
 }
@@ -42,6 +85,8 @@ static void seq_writer_nonmasked_4bit(unsigned char *str, size_t size)
 
 static void seq_writer_masked_text(unsigned char *str, size_t size)
 {
+    md5sum_update(str, size);
+    
     seq_size_original += size;
     compress(&SEQ, str, size);
 }
@@ -49,6 +94,8 @@ static void seq_writer_masked_text(unsigned char *str, size_t size)
 
 static void seq_writer_nonmasked_text(unsigned char *str, size_t size)
 {
+     md5sum_update(str, size);
+   
     seq_size_original += size;
     for (size_t i = 0; i < size; i++) { str[i] = (unsigned char) toupper(str[i]); }
     compress(&SEQ, str, size);
@@ -61,28 +108,55 @@ static void qual_writer(unsigned char *str, size_t size)
 }
 
 
-static void md5sum_writer(unsigned char *str, size_t size)
-{
-    // 16 additional bytes each seq
-    //seq_size_original += size; checksums are fixed length, no length(s) needed? 
-    compress(&MD5S, str, size);
-}
-
-
-typedef struct
-{
-    size_t length;
-    unsigned char *data;
-    void (*writer)(unsigned char *, size_t);
-}
-string_t;
 
 
 static string_t name    = { 0, NULL, &name_writer };
 static string_t comment = { 0, NULL, &comm_writer };
 static string_t seq     = { 0, NULL, NULL };
 static string_t qual    = { 0, NULL, &qual_writer };
-static string_t md5sum  = { 0, NULL, &md5sum_writer };
+
+
+
+static void md5sum_finish(void)
+{
+    printf("md5sun_finish :: invoked\n");
+    
+    if(store_md5sums)
+    {
+        /*
+        printf("md5sum_finish :: [not added characters: %i |%s] \n",str->length, str->data);
+        if(str->length > 0)
+        {
+            printf("appending?!\n");
+            str->writer(str->data, str->length);
+            str->length = 0;
+            printf("appended?!\n");
+        }
+        */
+        
+        unsigned char md5_digest[MD5_DIGEST_LENGTH];
+        MD5_Final(md5_digest, &ctx);
+
+        // print md5 in hexadec
+        if(verbose)
+        {
+            for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+                printf("%02x", md5_digest[i]);
+            }
+            printf("\n");
+        }
+        
+        // append to the md5sum buffer - arguably to be compressed
+        for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++)
+        {
+            // write to file?
+        }
+        
+        MD5_Init(&ctx); // flush
+    }
+}
+
+
 
 
 static void report_unexpected_char_stats(unsigned long long *n, const char *seq_type_name)
@@ -323,7 +397,7 @@ static inline void str_append_char(string_t *str, unsigned char c)
     }
 }
 
-
+/*
 void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, const unsigned long long length) {
     if(store_md5sums) 
     {
@@ -357,11 +431,10 @@ void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, const
 
 
         // print md5 in hexadec
-        printf("\n[");
         for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
             printf("%02x", md5_digest[i]);
         }
-        printf("]\n\n");
+        printf("\n");
 
         
         // append to the md5sum buffer - arguably to be compressed
@@ -370,7 +443,7 @@ void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, const
             str_append_char(&md5sum, md5_digest[i]); // ensure no zero-byte errors appear
         }
     }
-}
+}*/
 
 
 static void process_well_formed_fasta(void)
@@ -419,12 +492,11 @@ static void process_well_formed_fasta(void)
 
 static void process_non_well_formed_fasta(void)
 {
-    MD5_CTX ctx;
     printf("process.c :: process_non_well_formed_fasta()\n");
     
     unsigned c;
     do {
-        // At this point the '>' has already been read, so we immediately proceed to read the name.
+        // At this point the '>' was already read, so we immediately proceed to read the name.
         while ( (c = in_get_until(is_unexpected_text_arr, &name)) != INEOF )
         {
             if (is_space_arr[c]) { break; }
@@ -442,11 +514,6 @@ static void process_non_well_formed_fasta(void)
         }
         str_append_char(&comment, '\0');
 
-        if(store_md5sums) 
-        {
-            printf("flush/re-init md5 hash\n");
-            MD5_Init(&ctx);
-        }
         unsigned long long old_total_seq_size = seq_size_original + seq.length;
         if (c != INEOF)
         {
@@ -491,11 +558,19 @@ static void process_non_well_formed_fasta(void)
         }
         
         
-        finish_md5sum(&ctx, 
-                      &seq,
-                      old_total_seq_size, 
-                      seq_size_original + seq.length - old_total_seq_size
-                      );
+        if(store_md5sums)
+        {
+            if(seq.length > 0) // per sequence flush
+            {
+                printf("flush after sequence? [%s][%i]\n", seq.data,seq.length);
+                seq.writer(seq.data, seq.length); // alsu update md5 here
+                seq.length = 0;
+            }
+                    
+            md5sum_finish();
+            //printf("seq: [%s]\n",seq.data);
+            //printf("md5sum: [%s]\n",md5sum.data);
+        }
 
         add_length(seq_size_original + seq.length - old_total_seq_size);
         n_sequences++;
@@ -662,6 +737,12 @@ static void confirm_input_format(void)
 
 static void process(void)
 {
+    if(store_md5sums) 
+    {
+        MD5_Init(&ctx);
+    }
+
+
     // If input format is unknown at this point, it indicates empty input.
     if (in_format_from_input == in_format_unknown) { return; }
 
@@ -694,6 +775,8 @@ static void process(void)
     if (name.length != 0) { name.writer(name.data, name.length); name.length = 0; }
     if (comment.length != 0) { comment.writer(comment.data, comment.length); comment.length = 0; }
     if (seq.length != 0) { seq.writer(seq.data, seq.length); seq.length = 0; }
+    
+    printf("md5sum.length = %i\n", (int) md5sum.length);
     if (md5sum.length != 0) { md5sum.writer(md5sum.data, md5sum.length); md5sum.length = 0; }
 
     printf("\n\n\n--- --- ---\n");

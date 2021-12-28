@@ -508,7 +508,11 @@ int main(int argc, char **argv)
     if (store_mask) { compressor_init(&MASK, "mask", 0); }
     compressor_init(&SEQ, "sequence", sequence_window_size_log);
     if (store_qual) { compressor_init(&QUAL, "quality", 0); }
-    if (store_md5sums) { compressor_init(&MD5S, "md5sums", 0); }
+    if (store_md5sums)
+    {
+        printf("flush/re-init md5 hash\n");        
+        compressor_init(&MD5S, "md5sums", 0);
+    }
 
     process();
     close_input_file();
