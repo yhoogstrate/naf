@@ -119,21 +119,8 @@ static string_t qual    = { 0, NULL, &qual_writer };
 
 static void md5sum_finish(void)
 {
-    printf("md5sun_finish :: invoked\n");
-    
     if(store_md5sums)
     {
-        /*
-        printf("md5sum_finish :: [not added characters: %i |%s] \n",str->length, str->data);
-        if(str->length > 0)
-        {
-            printf("appending?!\n");
-            str->writer(str->data, str->length);
-            str->length = 0;
-            printf("appended?!\n");
-        }
-        */
-        
         unsigned char md5_digest[MD5_DIGEST_LENGTH];
         MD5_Final(md5_digest, &ctx);
 
@@ -149,7 +136,7 @@ static void md5sum_finish(void)
         // append to the md5sum buffer - arguably to be compressed
         for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++)
         {
-            // write to file?
+            // write to file or another buffer?
         }
         
         MD5_Init(&ctx); // flush
@@ -397,54 +384,6 @@ static inline void str_append_char(string_t *str, unsigned char c)
     }
 }
 
-/*
-void finish_md5sum(MD5_CTX *ctx, string_t *str, unsigned long long offset, const unsigned long long length) {
-    if(store_md5sums) 
-    {
-        unsigned char* buffer = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE + 1);
-        
-        
-        { //memcpy + toupper - iterates over chunks as long as UNCOMPRESSED_BUFFER_SIZE
-            const unsigned char *s = str->data + offset;
-            unsigned long long n;
-            
-            for(long long unsigned int i = 0;i < (length / UNCOMPRESSED_BUFFER_SIZE); i++) {// full buffer iterations
-                n = UNCOMPRESSED_BUFFER_SIZE;
-                unsigned char *d = buffer;
-                while (n--)
-                {
-                    *d++ = toupper(*s++);
-                }
-                MD5_Update(ctx, buffer, UNCOMPRESSED_BUFFER_SIZE);
-            }
-
-            n = length % UNCOMPRESSED_BUFFER_SIZE;
-            unsigned char *d = buffer;
-            while (n--)
-            {
-                *d++ = toupper(*s++);
-            }
-            MD5_Update(ctx, buffer, length % UNCOMPRESSED_BUFFER_SIZE);
-        }
-        unsigned char md5_digest[MD5_DIGEST_LENGTH];
-        MD5_Final(md5_digest, ctx);
-
-
-        // print md5 in hexadec
-        for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-            printf("%02x", md5_digest[i]);
-        }
-        printf("\n");
-
-        
-        // append to the md5sum buffer - arguably to be compressed
-        for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++)
-        {
-            str_append_char(&md5sum, md5_digest[i]); // ensure no zero-byte errors appear
-        }
-    }
-}*/
-
 
 static void process_well_formed_fasta(void)
 {
@@ -492,8 +431,6 @@ static void process_well_formed_fasta(void)
 
 static void process_non_well_formed_fasta(void)
 {
-    printf("process.c :: process_non_well_formed_fasta()\n");
-    
     unsigned c;
     do {
         // At this point the '>' was already read, so we immediately proceed to read the name.
@@ -562,14 +499,11 @@ static void process_non_well_formed_fasta(void)
         {
             if(seq.length > 0) // per sequence flush
             {
-                printf("flush after sequence? [%s][%i]\n", seq.data,seq.length);
                 seq.writer(seq.data, seq.length); // alsu update md5 here
                 seq.length = 0;
             }
                     
             md5sum_finish();
-            //printf("seq: [%s]\n",seq.data);
-            //printf("md5sum: [%s]\n",md5sum.data);
         }
 
         add_length(seq_size_original + seq.length - old_total_seq_size);
@@ -759,7 +693,6 @@ static void process(void)
 
     if (in_format_from_input == in_format_fasta)
     {
-        printf("\n--- --- ---\n\n\n");
         if (assume_well_formed_input) { process_well_formed_fasta(); }
         else { process_non_well_formed_fasta(); }
     }
@@ -776,8 +709,5 @@ static void process(void)
     if (comment.length != 0) { comment.writer(comment.data, comment.length); comment.length = 0; }
     if (seq.length != 0) { seq.writer(seq.data, seq.length); seq.length = 0; }
     
-    printf("md5sum.length = %i\n", (int) md5sum.length);
     if (md5sum.length != 0) { md5sum.writer(md5sum.data, md5sum.length); md5sum.length = 0; }
-
-    printf("\n\n\n--- --- ---\n");
 }
