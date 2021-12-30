@@ -170,4 +170,6 @@ static void write_compressed_data(FILE *F, compressor_t *w)
         copy_file_to_out(w->file, w->path, 4, w->written - 4);
         if (w->fill > 0) { fwrite_or_die(w->buf, 1, w->fill, F); }
     }
+    
+    assert(w->cstream == NULL);
 }

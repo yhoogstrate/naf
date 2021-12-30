@@ -26,25 +26,24 @@ string_t;
 
 
 
-static string_t md5sum  = { 0, NULL, NULL };
-
+static string_t md5sum_digest  = { 0, NULL, NULL }; // uppercase sequence data, to  make and update the md5digest
 static void md5sum_update(unsigned char *str, size_t size)
 {
     if(store_md5sums)
     {
         const unsigned char *s = str;
         unsigned long long n = size;
-        unsigned char *d = md5sum.data;
+        unsigned char *d = md5sum_digest.data;
         while (n--)
         {
             *d++ = toupper(*s++);
         }
         
-        md5sum.data[size] = '\0';
-        printf("[%s]\n",md5sum.data);
+        md5sum_digest.data[size] = '\0';
+        printf("[%s]\n",md5sum_digest.data);
         
         
-        MD5_Update(&ctx, md5sum.data, size);
+        MD5_Update(&ctx, md5sum_digest.data, size);
     }
 }
 
@@ -107,6 +106,11 @@ static void qual_writer(unsigned char *str, size_t size)
     compress(&QUAL, str, size);
 }
 
+static void md5sum_hash_s_writer(unsigned char *str, size_t size)
+{
+    compress(&MD5S, str, size);
+}
+
 
 
 
@@ -114,34 +118,9 @@ static string_t name    = { 0, NULL, &name_writer };
 static string_t comment = { 0, NULL, &comm_writer };
 static string_t seq     = { 0, NULL, NULL };
 static string_t qual    = { 0, NULL, &qual_writer };
+static string_t md5sum_hash_s = { 0, NULL, &md5sum_hash_s_writer };
 
 
-
-static void md5sum_finish(void)
-{
-    if(store_md5sums)
-    {
-        unsigned char md5_digest[MD5_DIGEST_LENGTH];
-        MD5_Final(md5_digest, &ctx);
-
-        // print md5 in hexadec
-        if(verbose)
-        {
-            for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-                printf("%02x", md5_digest[i]);
-            }
-            printf("\n");
-        }
-        
-        // append to the md5sum buffer - arguably to be compressed
-        for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++)
-        {
-            // write to file or another buffer?
-        }
-        
-        MD5_Init(&ctx); // flush
-    }
-}
 
 
 
@@ -383,6 +362,37 @@ static inline void str_append_char(string_t *str, unsigned char c)
         str->length = 0;
     }
 }
+
+
+static void md5sum_finish(void)
+{
+    if(store_md5sums)
+    {
+        unsigned char md5_digest[MD5_DIGEST_LENGTH];
+        MD5_Final(md5_digest, &ctx);
+
+        // print md5 in hexadec
+        if(verbose)
+        {
+            for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+                printf("%02x", md5_digest[i]);
+            }
+            printf("\n");
+        }
+        
+        // append to the md5sum buffer - arguably to be compressed
+        for(unsigned int i = 0; i < MD5_DIGEST_LENGTH; i++)
+        {
+            // write to file or another buffer?
+            printf("appending 16 bytes?!\n");
+            str_append_char(&md5sum_hash_s, md5_digest[i]);
+        }
+        
+        MD5_Init(&ctx); // flush
+    }
+}
+
+
 
 
 static void process_well_formed_fasta(void)
@@ -683,9 +693,9 @@ static void process(void)
     name.data    = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
     comment.data = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
     seq.data     = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
-    if(store_md5sums)
-    {
-        md5sum.data     = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
+    if(store_md5sums) {
+        md5sum_digest.data     = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
+        md5sum_hash_s.data     = (unsigned char *) malloc_or_die(UNCOMPRESSED_BUFFER_SIZE);
     }
 
     seq.writer = no_mask ? ((in_seq_type < seq_type_protein) ? &seq_writer_nonmasked_4bit : &seq_writer_nonmasked_text)
@@ -709,5 +719,7 @@ static void process(void)
     if (comment.length != 0) { comment.writer(comment.data, comment.length); comment.length = 0; }
     if (seq.length != 0) { seq.writer(seq.data, seq.length); seq.length = 0; }
     
-    if (md5sum.length != 0) { md5sum.writer(md5sum.data, md5sum.length); md5sum.length = 0; }
+    if(store_md5sums) {
+        if (md5sum_digest.length != 0) { md5sum_digest.writer(md5sum_digest.data, md5sum_digest.length); md5sum_digest.length = 0; }
+    }
 }

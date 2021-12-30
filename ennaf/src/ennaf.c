@@ -138,11 +138,16 @@ static void done(void)
     compressor_done(&MASK);
     compressor_done(&SEQ);
     compressor_done(&QUAL);
+    compressor_done(&MD5S);
 
     FREE(name.data);
     FREE(comment.data);
     FREE(seq.data);
     FREE(qual.data);
+    if(store_md5sums) {
+        FREE(md5sum_digest.data);
+        FREE(md5sum_hash_s.data);
+    }
 
     FREE(in_buffer);
     FREE(out_4bit_buffer);
@@ -537,12 +542,23 @@ int main(int argc, char **argv)
         compress(&SEQ, out_4bit_buffer, (size_t)(out_4bit_pos - out_4bit_buffer));
     }
 
+    if(store_md5sums)
+    {
+        printf("presumably writing md5 hashes to MD5S\n");
+        printf("md5sum_hash_s.size = %i\n", md5sum_hash_s.length);
+        //compress(&MD5S);
+    }
+
     compressor_end_stream(&IDS);
     compressor_end_stream(&COMM);
     compressor_end_stream(&LEN);
     compressor_end_stream(&MASK);
     compressor_end_stream(&SEQ);
     compressor_end_stream(&QUAL);
+    if(store_md5sums)
+    {
+        compressor_end_stream(&MD5S);
+    }
 
     fwrite_or_die(naf_magic_number, 1, 3, OUT);
 
@@ -551,7 +567,12 @@ int main(int argc, char **argv)
     if (in_seq_type == seq_type_dna) { fputc_or_die(1, OUT); }
     else { fputc_or_die(2, OUT); fputc_or_die(in_seq_type, OUT); }
 
-    fputc_or_die( (0           << 7) |   // extended format
+    int extended_f = 0;
+    if(store_md5sums) // or other meta features, to implement later
+    {
+        extended_f = 1;
+    }
+    fputc_or_die( (extended_f  << 7) |   // extended format
                   (store_title << 6) |   // title
                   (1           << 5) |   // ids
                   (1           << 4) |   // comments
@@ -595,6 +616,16 @@ int main(int argc, char **argv)
     {
         write_variable_length_encoded_number(OUT, QUAL.uncompressed_size);
         write_compressed_data(OUT, &QUAL);
+    }
+
+    if(extended_f != 0)
+    {
+        // some layout for metadata blocks
+
+        if(store_md5sums)
+        {
+            write_compressed_data(OUT, &MD5S);
+        }
     }
 
     if (out_file_path != NULL && have_input_stat) { close_output_file_and_set_stat(); }
