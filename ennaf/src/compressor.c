@@ -120,6 +120,12 @@ static void compressor_done(compressor_t *w)
 __attribute__((always_inline))
 static inline void compress(compressor_t *w, const void *data, size_t size)
 {
+    if(w == &MD5S) {
+        printf("MD5S compress, writing bytes: %i\n", size);
+    } else if(w == &SEQ) {
+        printf("SEQ compress, writing bytes: %i\n", size);
+    }
+    
     assert(w != NULL);
     assert(data != NULL);
     assert(w->buf != NULL);

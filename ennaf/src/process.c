@@ -721,5 +721,6 @@ static void process(void)
     
     if(store_md5sums) {
         if (md5sum_digest.length != 0) { md5sum_digest.writer(md5sum_digest.data, md5sum_digest.length); md5sum_digest.length = 0; }
+        if (md5sum_hash_s.length != 0) { md5sum_hash_s.writer(md5sum_hash_s.data, md5sum_hash_s.length); md5sum_hash_s.length = 0; }
     }
 }
