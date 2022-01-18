@@ -1,8 +1,21 @@
 
+#include <assert.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdarg.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
 
 #include "zstd_seekable_utils.h"
 #include "zstdseek_compress.c"
 #include "zstdseek_utils.c"
+
+#include "utils.c"
 
 #include "common/xxhash.h"
 
@@ -27,7 +40,17 @@ int main() {
             exit(1);
         }
         
+        char *data = (char *) malloc_or_die(255);
+        data = "test\0";
         
+        ZSTD_inBuffer input = { data, 4, 0 };
+        
+        
+        // stream?
+        //w->file = fopen(w->path, "wb+");
+        //if (w->file == NULL) { die("can't create temporary file \"%s\"\n", w->path); }
+        
+        free(data);
     }
     
     // example 2: empty string
