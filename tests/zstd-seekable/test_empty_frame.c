@@ -34,23 +34,36 @@ int main() {
         }
         
         size_t const initResult = ZSTD_seekable_initCStream(s, level, 1, 1024 * 1024);//1024 * 1024 = framesize
-        if (ZSTD_isError(initResult))
-        {
+        if (ZSTD_isError(initResult)) {
             fputs("ZSTD_seekable_initCStream err @ example 1 ", stderr);
             exit(1);
         }
         
-        char *data = (char *) malloc_or_die(255);
-        data = "test\0";
+        char *data_in = (char *) malloc_or_die(255 * sizeof(char));
+        data_in = "test\0";
+        char *data_out = (char *) malloc_or_die(255 * 255 * sizeof(char));
         
-        ZSTD_inBuffer input = { data, 4, 0 };
+        ZSTD_inBuffer input = { data_in, 4, 0 }; // [start of input buffer, size, pos] uncompressed data?
+        ZSTD_outBuffer output = { data_out, 255*255, 0 };
         
+        size_t toRead = ZSTD_seekable_compressStream(s, &output, &input);
+        if (ZSTD_isError(toRead)) {
+            fputs("ZSTD_seekable_compressStream @ example 1 ", stderr);
+            exit(1);
+        }
+        
+        printf("example 1: toRead = %li\n",  toRead);
+        
+        size_t const remainingToFlush = ZSTD_seekable_endStream(s, &output);
+        if (remainingToFlush != 0) { die("can't end zstd stream\n"); }
         
         // stream?
         //w->file = fopen(w->path, "wb+");
         //if (w->file == NULL) { die("can't create temporary file \"%s\"\n", w->path); }
         
-        free(data);
+        //free(data_in);
+        //free(data_out);
+        //free(s);
     }
     
     // example 2: empty string
