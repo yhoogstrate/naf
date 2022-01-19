@@ -42,6 +42,13 @@ int main() {
         char *data_in = (char *) malloc_or_die(255 * sizeof(char));
         data_in = "test\0";
         char *data_out = (char *) malloc_or_die(255 * 255 * sizeof(char));
+        for(int i = 0 ; i < 64; i++){
+            data_out[i] = '\0';
+        }
+        
+        for(int i = 0; i < 48; i++) {
+            assert(data_out[i] == '\0');
+        }
         
         ZSTD_inBuffer input = { data_in, 4, 0 }; // [start of input buffer, size, pos] uncompressed data?
         ZSTD_outBuffer output = { data_out, 255*255, 0 };
@@ -52,14 +59,23 @@ int main() {
             exit(1);
         }
         
-        printf("example 1: toRead = %li\n",  toRead);
+        printf("example 1: toRead = %li , compressed data size? : %li \n",  toRead,  output.pos);
         
         size_t const remainingToFlush = ZSTD_seekable_endStream(s, &output);
         if (remainingToFlush != 0) { die("can't end zstd stream\n"); }
         
-        // stream?
-        //w->file = fopen(w->path, "wb+");
-        //if (w->file == NULL) { die("can't create temporary file \"%s\"\n", w->path); }
+        for(int i = 0; i < 48; i++) {
+            printf("[%i] %i\n", i , (int) data_out[i]);
+        }
+        
+        printf("example 1: toRead = %li , compressed data size? : %li \n",  toRead,  output.pos);
+        
+        
+        // export data
+        FILE *file = fopen("temp/example-01.zst", "wb+");
+        if(file == NULL) { die("can't create temporary file \n"); }
+        fwrite(data_out, 1, 42, file);
+        fclose(file);
         
         //free(data_in);
         //free(data_out);
