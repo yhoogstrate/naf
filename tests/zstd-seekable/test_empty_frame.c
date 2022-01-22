@@ -28,6 +28,14 @@ int main() {
     // example 1: w/ a string
     {
         printf("example 1\n");
+        char *data_in = (char *) malloc_or_die(255 * sizeof(char));
+        data_in = "test\0";
+        char *data_out = (char *) malloc_or_die(255 * 255 * sizeof(char));
+        for(int i = 0 ; i < 64; i++){
+            data_out[i] = '\0';
+            assert(data_out[i] == '\0');
+        }
+
         
         ZSTD_seekable_CStream *s = ZSTD_seekable_createCStream();
         if (s == NULL) {
@@ -41,13 +49,6 @@ int main() {
             exit(1);
         }
         
-        char *data_in = (char *) malloc_or_die(255 * sizeof(char));
-        data_in = "test\0";
-        char *data_out = (char *) malloc_or_die(255 * 255 * sizeof(char));
-        for(int i = 0 ; i < 64; i++){
-            data_out[i] = '\0';
-            assert(data_out[i] == '\0');
-        }
         
         ZSTD_inBuffer input = { data_in, 4, 0 }; // [start of input buffer, size, pos] uncompressed data?
         ZSTD_outBuffer output = { data_out, 255*255, 0 };
@@ -110,6 +111,7 @@ int main() {
         ZSTD_outBuffer out = { out_buffer, out_buffer_size, 0 };
         
         bytes_to_read = ZSTD_decompressStream(input_decompression_stream, &out, &in);
+        out_buffer[out.pos] = '\0';
         printf(" - decompressed size: %i\n", out.pos);
         printf(" - decompressed: [%s]\n", out_buffer);
         
