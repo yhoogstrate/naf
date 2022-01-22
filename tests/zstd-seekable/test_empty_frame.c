@@ -80,8 +80,45 @@ int main() {
         //free(data_out);
         //free(s);
         
-        printf("\n\n");
+        printf(" *** decompression ***\n");
+        
+
+
+        static ZSTD_DStream *input_decompression_stream = NULL;
+        static ZSTD_inBuffer zstd_file_in_buffer;
+
+
+
+        static size_t in_buffer_size = 0;
+        in_buffer_size = ZSTD_DStreamInSize();
+        static char *in_buffer = NULL;
+        in_buffer = (char *) malloc_or_die(in_buffer_size);
+
+        static size_t out_buffer_size = 0;
+        out_buffer_size = ZSTD_DStreamOutSize();
+        static char *out_buffer = NULL;
+        out_buffer = (char *) malloc_or_die(out_buffer_size);
+        
+        
+        input_decompression_stream = ZSTD_createDStream();
+        size_t bytes_to_read = ZSTD_initDStream(input_decompression_stream);
+        printf(" - bytes_to_read = %i\n", (int) bytes_to_read);
+        
+        ZSTD_TRY(ZSTD_DCtx_setParameter(input_decompression_stream, ZSTD_d_windowLogMax, ZSTD_WINDOWLOG_MAX));// what's this?
+        
+        ZSTD_inBuffer in = { data_out, output.pos, 0 };
+        ZSTD_outBuffer out = { out_buffer, out_buffer_size, 0 };
+        
+        bytes_to_read = ZSTD_decompressStream(input_decompression_stream, &out, &in);
+        printf(" - decompressed size: %i\n", out.pos);
+        printf(" - decompressed: [%s]\n", out_buffer);
+        
+        printf(" - checkpoint\n");
+
+        //FREE(input_decompression_stream );
     }
+    
+    printf("\n\n");
     
     // example 2: empty string
     {
