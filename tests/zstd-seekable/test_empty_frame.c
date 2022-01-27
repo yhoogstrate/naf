@@ -72,7 +72,8 @@ int main() {
             } */
             
             data_out_size = output.pos;
-            printf("   - toRead = %li , compressed data size: %li \n",  toRead,  data_out_size);
+            printf("   - toRead: %li \n",  toRead);
+            printf("   - compressed data size: %li \n",  data_out_size);
             
             
             // export data
@@ -88,7 +89,7 @@ int main() {
             //free(s);
         }
         
-        printf(" :: decompression");
+        printf(" :: decompression\n");
 
         int out_buffer_size = 0;
         out_buffer_size = ZSTD_DStreamOutSize();
@@ -171,7 +172,8 @@ int main() {
             } */
             
             data_out_size = output.pos;
-            printf("   - toRead = %li , compressed data size: %li \n",  toRead,  data_out_size);
+            printf("   - toRead: %li \n",  toRead);
+            printf("   - compressed data size: %li \n",  data_out_size);
             
             
             // export data
@@ -187,7 +189,7 @@ int main() {
             //free(s);
         }
         
-        printf(" :: decompression ***\n");
+        printf(" :: decompression\n");
         
 
         int out_buffer_size = 0;
@@ -230,7 +232,7 @@ int main() {
     // [ ---- compress using ZSTD [classic] --- ]
     // example 3: w/ a string
     { // compression scope
-        printf("example 3\n");
+        printf("example 3: compress \"test\" using ZSTD Classic\n");
         
         char *data_in = (char *) malloc_or_die(255 * sizeof(char));
         data_in = "test\0";
@@ -270,7 +272,8 @@ int main() {
             if (remainingToFlush != 0) { die("can't end zstd stream\n"); }
             
             data_out_size = output.pos;
-            printf("   - toRead = %li , compressed data size? : %li \n",  toRead,  data_out_size);
+            printf("   - toRead: %li \n",  toRead);
+            printf("   - compressed data size: %li \n",  data_out_size);
             
             
             // export data
@@ -379,7 +382,9 @@ int main() {
                 printf("[%i] %i\n", i , (int) data_out[i]);
             } */
             
-            printf("   - toRead = %li , compressed data size? : %li \n",  toRead,  output.pos);
+            data_out_size = output.pos;
+            printf("   - toRead: %li \n",  toRead);
+            printf("   - compressed data size: %li \n",  data_out_size);
             
             
             // export data
