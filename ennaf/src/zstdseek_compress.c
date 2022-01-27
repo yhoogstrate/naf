@@ -108,6 +108,8 @@ size_t ZSTD_seekable_freeFrameLog(ZSTD_frameLog* fl)
 
 ZSTD_seekable_CStream* ZSTD_seekable_createCStream(void)
 {
+    printf("cc   ZSTD_seekable_createCStream()\n");
+
     ZSTD_seekable_CStream* const zcs = (ZSTD_seekable_CStream*)malloc(sizeof(ZSTD_seekable_CStream));
     if (zcs == NULL) return NULL;
 
@@ -141,6 +143,8 @@ size_t ZSTD_seekable_initCStream(ZSTD_seekable_CStream* zcs,
                                  int checksumFlag,
                                  unsigned maxFrameSize)
 {
+    printf("cc   ZSTD_seekable_initCStream(compressionLevel = %i)\n",compressionLevel);
+
     zcs->framelog.size = 0;
     zcs->frameCSize = 0;
     zcs->frameDSize = 0;
@@ -230,6 +234,8 @@ size_t ZSTD_seekable_compressStream(ZSTD_seekable_CStream* zcs, ZSTD_outBuffer* 
 {
     const BYTE* const inBase = (const BYTE*) input->src + input->pos;
     size_t inLen = input->size - input->pos;
+
+    printf("cc   ZSTD_seekable_compressStream(inLen = %li)\n", inLen);
 
     inLen = MIN(inLen, (size_t)(zcs->maxFrameSize - zcs->frameDSize));
 
@@ -360,5 +366,9 @@ size_t ZSTD_seekable_endStream(ZSTD_seekable_CStream* zcs, ZSTD_outBuffer* outpu
 
     zcs->writingSeekTable = 1;
 
-    return ZSTD_seekable_writeSeekTable(&zcs->framelog, output);
+    size_t out = ZSTD_seekable_writeSeekTable(&zcs->framelog, output);
+    printf("cc   ZSTD_seekable_endStream() -> output.pos = %li\n", output->pos);
+
+
+    return out;
 }
