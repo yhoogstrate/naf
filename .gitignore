@@ -2,3 +2,4 @@ unnaf/unnaf
 *.err
 *.out
 ennaf/ennaf
+*.naf

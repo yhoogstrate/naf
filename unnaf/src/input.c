@@ -32,6 +32,8 @@ static void read_header(void)
 {
     unsigned char first_bytes[3];
 
+    printf("cc   read_header()\n");
+
     size_t could_read = fread(&first_bytes, 1, 3, IN);
     if (could_read == 0) { die("empty input"); }
     else if (could_read != 3) { incomplete(); }
@@ -71,6 +73,12 @@ static void read_header(void)
     has_mask    = (flags >> 2) & 1;
     has_data    = (flags >> 1) & 1;
     has_quality =  flags       & 1;
+    
+    if(has_data) {
+        printf("cc   has_data = true\n");
+    } else {
+        printf("cc   has_data = false\n");
+    }
 
     name_separator = fgetc_or_incomplete(IN);
     if (name_separator < 0x20 || name_separator > 0x7E) { die("unsupported name separator character\n"); }
@@ -153,6 +161,7 @@ static void load_ids(void)
     if (fread(compressed_ids_buffer + 4, 1, compressed_ids_size, IN) != compressed_ids_size) { incomplete(); }
 
     size_t n_dec_bytes = ZSTD_decompress( (void*)ids_buffer, ids_size, (void*)compressed_ids_buffer, compressed_ids_size + 4);
+    printf("cc   ZSTD_decompress() [load_ids] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != ids_size) { die("can't decompress ids\n"); }
     if (ids_buffer[ids_size-1] != 0) { die("corrupted ids - not 0-terminated\n"); }
 
@@ -181,6 +190,7 @@ static void load_names(void)
     if (fread(compressed_names_buffer + 4, 1, compressed_names_size, IN) != compressed_names_size) { incomplete(); }
 
     size_t n_dec_bytes = ZSTD_decompress( (void*)names_buffer, names_size, (void*)compressed_names_buffer, compressed_names_size + 4);
+    printf("cc   ZSTD_decompress() [load_names] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != names_size) { die("can't decompress names\n"); }
     if (names_buffer[names_size-1] != 0) { die("corrupted names - not 0-terminated\n"); }
 
@@ -210,6 +220,7 @@ static void load_lengths(void)
     if (fread(compressed_lengths_buffer + 4, 1, compressed_lengths_size, IN) != compressed_lengths_size) { incomplete(); }
 
     size_t n_dec_bytes = ZSTD_decompress( (void*)lengths_buffer, lengths_size, (void*)compressed_lengths_buffer, compressed_lengths_size + 4);
+    printf("cc   ZSTD_decompress() [load_lengths] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != lengths_size) { die("can't decompress lengths\n"); }
 
     free(compressed_lengths_buffer);
@@ -228,6 +239,7 @@ static void load_mask(void)
     if (fread(compressed_mask_buffer + 4, 1, compressed_mask_size, IN) != compressed_mask_size) { incomplete(); }
 
     size_t n_dec_bytes = ZSTD_decompress( (void*)mask_buffer, mask_size, (void*)compressed_mask_buffer, compressed_mask_size + 4);
+    printf("cc   ZSTD_decompress() [load_mask] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != mask_size) { die("can't decompress mask\n"); }
 
     free(compressed_mask_buffer);
@@ -250,6 +262,7 @@ static void load_compressed_sequence(void)
 {
     total_seq_length = read_number(IN);
     compressed_seq_size = read_number(IN);
+    printf("cc   total_seq_length = %li\n",total_seq_length);
 
     compressed_seq_buffer = (unsigned char *) malloc_or_die(compressed_seq_size + 4);
     put_magic_number(compressed_seq_buffer);
@@ -259,6 +272,7 @@ static void load_compressed_sequence(void)
 
 static size_t initialize_input_decompression(void)
 {
+    printf("cc  ZSTD_DStreamInSize()\n");
     in_buffer_size = ZSTD_DStreamInSize();
     in_buffer = (char *) malloc_or_die(in_buffer_size);
 
