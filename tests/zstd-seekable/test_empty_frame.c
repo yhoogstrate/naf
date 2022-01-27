@@ -235,6 +235,110 @@ int main() {
         //FREE(input_decompression_stream );
     }
     
+        printf("\n\n");
+    
+    // example 2b: empty string
+    {
+        printf("example 2b: compress \"\" ZSTD Seekable -  - without ZSTD_seekable_compressStream()\n");
+        char *data_in = (char *) malloc_or_die(255 * sizeof(char));
+        data_in = "\0";
+        int data_in_size = 0;
+        
+        char *data_out = (char *) malloc_or_die(255 * 255 * sizeof(char));
+        int data_out_size = 0;
+        
+        for(int i = 0 ; i < 64; i++){
+            data_out[i] = '\0';
+            assert(data_out[i] == '\0');
+        }
+
+        { // scope for compressing
+            ZSTD_seekable_CStream *s = ZSTD_seekable_createCStream();
+            if (s == NULL) {
+                fputs("wrong alloc @ example 2 ", stderr);
+                exit(1);
+            }
+            
+            size_t const initResult = ZSTD_seekable_initCStream(s, level, 1, 1024 * 1024);//1024 * 1024 = framesize
+            if (ZSTD_isError(initResult)) {
+                fputs("ZSTD_seekable_initCStream err @ example 2 ", stderr);
+                exit(1);
+            }
+            
+            
+            ZSTD_inBuffer input = { data_in, data_in_size, 0 }; // [start of input buffer, size, pos] uncompressed data?
+            ZSTD_outBuffer output = { data_out, 255*255, 0 };
+            
+            size_t toRead = ZSTD_seekable_compressStream(s, &output, &input);
+            if (ZSTD_isError(toRead)) {
+                fputs("ZSTD_seekable_compressStream @ example 2 ", stderr);
+                exit(1);
+            }
+            
+            size_t const remainingToFlush = ZSTD_seekable_endStream(s, &output);
+            if (remainingToFlush != 0) { die("can't end zstd stream\n"); }
+            
+            data_out_size = output.pos;
+            printf("\n");
+
+            for(int i = 0; i < data_out_size; i++) {
+                printf("[%i=%i]", i , (unsigned int) data_out[i]);
+                
+                if(i % 16 == 15) {
+                    printf("\n");
+                }
+            }
+            printf("\n\n");
+            
+            
+            // export data
+            FILE *file = fopen("temp/example-02b__zstd__empty_string_without_compr_func.zst", "wb+");
+            if(file == NULL) { die("can't create temporary file \n"); }
+            fwrite(data_out, 1, output.pos, file);
+            fclose(file);
+            
+            ZSTD_seekable_freeCStream(s);
+            
+            //free(data_in);
+            //free(data_out);
+            //free(s);
+        }
+        
+        printf(" :: decompression\n");
+        
+
+        int out_buffer_size = 0;
+        out_buffer_size = ZSTD_DStreamOutSize();
+        static char *out_buffer = NULL;
+        out_buffer = (char *) malloc_or_die(out_buffer_size);
+
+        
+        { // scope for decompressing
+            static ZSTD_DStream *input_decompression_stream = NULL;
+            static ZSTD_inBuffer zstd_file_in_buffer;
+
+
+            input_decompression_stream = ZSTD_createDStream();
+            printf("cc   ZSTD_createDStream()\n");
+            size_t bytes_to_read = ZSTD_initDStream(input_decompression_stream);
+            printf("cc   ZSTD_initDStream()\n");
+            printf("   - bytes_to_read = %i\n", (int) bytes_to_read);
+            
+            ZSTD_TRY(ZSTD_DCtx_setParameter(input_decompression_stream, ZSTD_d_windowLogMax, ZSTD_WINDOWLOG_MAX));// what's this?
+            printf("cc   ZSTD_DCtx_setParameter() ??\n");
+            
+            ZSTD_inBuffer in = { data_out, data_out_size, 0 };
+            ZSTD_outBuffer out = { out_buffer, 1024, 0 };
+            
+            bytes_to_read = ZSTD_decompressStream(input_decompression_stream, &out, &in);
+            out_buffer_size = out.pos;
+            printf("cc   ZSTD_decompressStream() -> %i\n",out_buffer_size);
+            out_buffer[out_buffer_size] = '\0';
+        }
+        
+        printf("   - decompressed: [%s]\n", out_buffer);
+        //FREE(input_decompression_stream );
+    }
     
     printf("\n\n");
     
@@ -413,6 +517,125 @@ int main() {
             
             // export data
             FILE *file = fopen("temp/example-04__zstd__empty_string.zst", "wb+");
+            if(file == NULL) { die("can't create temporary file \n"); }
+            fwrite(data_out, 1, output.pos, file);
+            fclose(file);
+            
+            ZSTD_freeCStream(s);
+            
+            //free(data_in);
+            //free(data_out);
+            //free(s);
+        }
+        
+        
+        printf(" :: decompression\n");
+        
+
+        int out_buffer_size = 0;
+        out_buffer_size = ZSTD_DStreamOutSize();
+        static char *out_buffer = NULL;
+        out_buffer = (char *) malloc_or_die(out_buffer_size);
+
+        
+        { // scope for decompressing
+            static ZSTD_DStream *input_decompression_stream = NULL;
+            static ZSTD_inBuffer zstd_file_in_buffer;
+
+
+            input_decompression_stream = ZSTD_createDStream();
+            printf("cc   ZSTD_createDStream()\n");
+            size_t bytes_to_read = ZSTD_initDStream(input_decompression_stream);
+            printf("cc   ZSTD_initDStream()\n");
+            printf("   - bytes_to_read = %i\n", (int) bytes_to_read);
+            
+            ZSTD_TRY(ZSTD_DCtx_setParameter(input_decompression_stream, ZSTD_d_windowLogMax, ZSTD_WINDOWLOG_MAX));// what's this?
+            printf("cc   ZSTD_DCtx_setParameter() ??\n");
+            
+            ZSTD_inBuffer in = { data_out, data_out_size, 0 };
+            ZSTD_outBuffer out = { out_buffer, 1024, 0 };
+            
+            bytes_to_read = ZSTD_decompressStream(input_decompression_stream, &out, &in);
+            out_buffer_size = out.pos;
+            printf("cc   ZSTD_decompressStream() -> %i\n",out_buffer_size);
+            out_buffer[out_buffer_size] = '\0';
+        }
+        
+        printf("   - decompressed: [%s]\n", out_buffer);
+
+        //FREE(input_decompression_stream );
+    
+    }
+    
+    printf("\n\n");
+        
+    // example 4b: empty string
+    {
+        printf("example 4b: compress \"\" ZSTD Classic - without ZSTD_compressStream() \n");
+        char *data_in = (char *) malloc_or_die(255 * sizeof(char));
+        data_in = "\0";
+        int data_in_size = 0;
+        
+        char *data_out = (char *) malloc_or_die(255 * 255 * sizeof(char));
+        int data_out_size = 0;
+        
+        for(int i = 0 ; i < 64; i++){
+            data_out[i] = '\0';
+            assert(data_out[i] == '\0');
+        }
+
+        { // scope for compressing
+
+
+           ZSTD_CStream *s = ZSTD_createCStream();
+            if (s == NULL) {
+                fputs("wrong alloc @ example 4 ", stderr);
+                exit(1);
+            }
+            
+            size_t const initResult = ZSTD_initCStream(s, level);//1024 * 1024 = framesize
+            if (ZSTD_isError(initResult)) {
+                fputs("ZSTD_initCStream err @ example 4 ", stderr);
+                exit(1);
+            }
+            
+            char *data_in = (char *) malloc_or_die(255 * sizeof(char));
+            data_in = "\0";
+            char *data_out = (char *) malloc_or_die(255 * 255 * sizeof(char));
+            for(int i = 0 ; i < 64; i++){
+                data_out[i] = '\0';
+                assert(data_out[i] == '\0');
+            }
+            
+            ZSTD_inBuffer input = { data_in, 0, 0 }; // [start of input buffer, size, pos] uncompressed data?
+            ZSTD_outBuffer output = { data_out, 255*255, 0 };
+            
+            /*
+            size_t toRead = ZSTD_compressStream(s, &output, &input);
+            if (ZSTD_isError(toRead)) {
+                fputs("ZSTD_compressStream @ example 4 ", stderr);
+                exit(1);
+            }*/
+            
+            size_t const remainingToFlush = ZSTD_endStream(s, &output);
+            if (remainingToFlush != 0) { die("can't end zstd stream\n"); }
+            
+
+            data_out_size = output.pos;
+            printf("\n");
+
+            for(int i = 0; i < data_out_size; i++) {
+                printf("[%i=%i]", i , (unsigned int) data_out[i]);
+                
+                if(i % 16 == 15) {
+                    printf("\n");
+                }
+            }
+            printf("\n\n");
+            
+            
+            // export data
+            FILE *file = fopen("temp/example-04b__zstd__empty_string_without_compr_func.zst", "wb+");
             if(file == NULL) { die("can't create temporary file \n"); }
             fwrite(data_out, 1, output.pos, file);
             fclose(file);
