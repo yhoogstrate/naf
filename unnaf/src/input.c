@@ -153,7 +153,9 @@ static void skip_mask(void)
 static void load_ids(void)
 {
     unsigned long long ids_size = read_number(IN);
+    printf("ids_size = %lli\n", ids_size);
     unsigned long long compressed_ids_size = read_number(IN);
+    printf("compressed_ids_size = %lli\n", compressed_ids_size);
 
     ids_buffer = (char *) malloc_or_die(ids_size);
     compressed_ids_buffer = (unsigned char *) malloc_or_die(compressed_ids_size + 4);
@@ -164,6 +166,12 @@ static void load_ids(void)
     printf("cc   ZSTD_decompress() [load_ids] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != ids_size) { die("can't decompress ids\n"); }
     if (ids_buffer[ids_size-1] != 0) { die("corrupted ids - not 0-terminated\n"); }
+    
+    for(size_t i = 0; i < n_dec_bytes; i++ )
+    {
+        printf("[%i]", (int) ids_buffer[i] );
+    }
+    printf("\n");
 
     free(compressed_ids_buffer);
     compressed_ids_buffer = 0;
@@ -211,17 +219,33 @@ static void load_names(void)
 static void load_lengths(void)
 {
     unsigned long long lengths_size = read_number(IN);
+    printf("lengths_size = %lli\n", lengths_size);
     unsigned long long compressed_lengths_size = read_number(IN);
+    printf("compressed_lengths_size = %lli\n", compressed_lengths_size);
     n_lengths = lengths_size / 4;
+    printf("n_lengths = %lli\n", n_lengths);
+    
 
     lengths_buffer = (unsigned int *) malloc_or_die(lengths_size);
     compressed_lengths_buffer = (unsigned char *) malloc_or_die(compressed_lengths_size + 4);
     put_magic_number(compressed_lengths_buffer);
     if (fread(compressed_lengths_buffer + 4, 1, compressed_lengths_size, IN) != compressed_lengths_size) { incomplete(); }
+    
+    //for(size_t i = 0; i < compressed_lengths_size; i++ )
+    //{
+    //    printf("[%i]", (int) compressed_lengths_buffer[i] );
+    //}
+    printf("\n");
 
     size_t n_dec_bytes = ZSTD_decompress( (void*)lengths_buffer, lengths_size, (void*)compressed_lengths_buffer, compressed_lengths_size + 4);
     printf("cc   ZSTD_decompress() [load_lengths] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != lengths_size) { die("can't decompress lengths\n"); }
+    
+    for(size_t i = 0; i < n_dec_bytes; i++ )
+    {
+        printf("[%i]", (int) lengths_buffer[i] );
+    }
+    printf("\n");
 
     free(compressed_lengths_buffer);
     compressed_lengths_buffer = 0;
@@ -231,16 +255,25 @@ static void load_lengths(void)
 static void load_mask(void)
 {
     mask_size = read_number(IN);
+    printf("mask_size = %lli\n", mask_size);
     unsigned long long compressed_mask_size = read_number(IN);
 
     mask_buffer = (unsigned char *) malloc_or_die(mask_size);
     compressed_mask_buffer = (unsigned char *) malloc_or_die(compressed_mask_size + 4);
     put_magic_number(compressed_mask_buffer);
     if (fread(compressed_mask_buffer + 4, 1, compressed_mask_size, IN) != compressed_mask_size) { incomplete(); }
+    
+
 
     size_t n_dec_bytes = ZSTD_decompress( (void*)mask_buffer, mask_size, (void*)compressed_mask_buffer, compressed_mask_size + 4);
     printf("cc   ZSTD_decompress() [load_mask] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != mask_size) { die("can't decompress mask\n"); }
+    
+    for(size_t i = 0; i < n_dec_bytes; i++ )
+    {
+        printf("[%i]", (int) compressed_lengths_buffer[i] );
+    }
+    printf("\n");
 
     free(compressed_mask_buffer);
     compressed_mask_buffer = 0;
@@ -262,7 +295,7 @@ static void load_compressed_sequence(void)
 {
     total_seq_length = read_number(IN);
     compressed_seq_size = read_number(IN);
-    printf("cc   total_seq_length = %li\n",total_seq_length);
+    printf("cc   total_seq_length = %lli\n",total_seq_length);
 
     compressed_seq_buffer = (unsigned char *) malloc_or_die(compressed_seq_size + 4);
     put_magic_number(compressed_seq_buffer);
@@ -286,6 +319,7 @@ static size_t initialize_input_decompression(void)
 
     size_t bytes_to_read = ZSTD_initDStream(input_decompression_stream);
     if (ZSTD_isError(bytes_to_read)) { die("can't initialize input decompression stream: %s\n", ZSTD_getErrorName(bytes_to_read)); }
+    printf("byte-to_read = %li\n", bytes_to_read);
 
     if (bytes_to_read < 5) { die("can't initialize decompression\n"); }
 

@@ -604,14 +604,48 @@ static void print_charcount(int masking)
     for (unsigned i = 127; i < 256; i++) { if (counts[i] != 0) { fprintf(OUT, "\\x%02X\t%llu\n", i, counts[i]); } }
 }
 
-
+//42
+//40
+//46
+//17
+//17
 static void print_fasta(int masking)
 {
+    if(has_data) {printf("has_data = true\n");}
+    else{ printf("has_data = false\n");}
+        
+    
     if (!has_data) { return; }
 
+    
     load_ids();
+    for (unsigned long long i = 0; i < N; i++) { fprintf(OUT, "%s\n", ids[i]); }
+    
     load_names();
+    for (unsigned long long i = 0; i < N; i++)
+    {
+        fputs(ids[i], OUT);
+        if (names[i][0] != 0)
+        {
+            fputc(name_separator, OUT); 
+            fputs(names[i], OUT);
+        }
+        fputc('\n', OUT); 
+    }
+    
     load_lengths();
+    for (unsigned long long i = 0; i < n_lengths; i++)
+    {
+        unsigned long long len = 0;
+        while (i < n_lengths && lengths_buffer[i] == 4294967295u)
+        { 
+            len += 4294967295llu;
+            i++;
+        }
+        if (i < n_lengths) { len += lengths_buffer[i]; }
+
+        fprintf(OUT, "%llu\n", len);
+    }
 
     if (masking) { load_mask(); }
     else { skip_mask(); }

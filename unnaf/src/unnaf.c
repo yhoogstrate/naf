@@ -383,6 +383,7 @@ int main(int argc, char **argv)
         die("input has no 4-bit encoded data, but %s sequences\n", in_seq_type_name);
     }
 
+    printf("checkpoint 01\n");
     open_output_file();
 
     if (in_file_path != NULL && out_file_path != NULL)
@@ -390,6 +391,8 @@ int main(int argc, char **argv)
         if (fstat(fileno(IN), &input_stat) == 0) { have_input_stat = true; }
         else { err("can't obtain status of input file\n"); }
     }
+
+    printf("checkpoint 02\n");
 
 
     if (out_type == FORMAT_NAME)
@@ -399,9 +402,15 @@ int main(int argc, char **argv)
     else if (out_type == PART_LIST) { print_list_of_parts(); }
     else
     {
+        printf("checkpoint 03\n");
+
         max_line_length = read_number(IN);
+        printf("max_line_length = %lli\n", max_line_length);
         if (line_length_is_specified) { max_line_length = requested_line_length; }
+        printf("max_line_length = %lli\n", max_line_length);
+        
         N = read_number(IN);
+        printf("N = %lli\n", N);
 
         if (out_type == NUMBER_OF_SEQUENCES) { fprintf(OUT, "%llu\n", N); }
         else if (out_type == PART_SIZES) { print_part_sizes(); }
@@ -419,8 +428,17 @@ int main(int argc, char **argv)
             else if (out_type == FOUR_BIT) { print_4bit(); }
             else
             {
+                printf("checkpoint 4\n");
+                
                 dna_buffer_flush_size = ZSTD_DStreamOutSize() * 2;
+                
+                printf("dna_buffer_flush_size: %li\n",dna_buffer_flush_size);
+                
                 dna_buffer_size = dna_buffer_flush_size * 2 + 10;
+                
+                printf("dna_buffer_size: %li\n",dna_buffer_size);
+
+                
                 dna_buffer = (unsigned char *) malloc_or_die(dna_buffer_size);
                 out_print_buffer_size = dna_buffer_size * 2;
                 out_print_buffer = (unsigned char *) malloc_or_die(out_print_buffer_size);
@@ -431,7 +449,17 @@ int main(int argc, char **argv)
                 else if (out_type == UNMASKED_DNA) { print_dna(0); }
                 else if (out_type == CHARCOUNT) { print_charcount(use_mask && has_mask); }
                 else if (out_type == SEQUENCES) { print_sequences(use_mask && has_mask); }
-                else if (out_type == FASTA) { print_fasta(use_mask && has_mask); }
+                else if (out_type == FASTA) {
+
+                    printf("checkpoint 5\n");
+                    if(use_mask) {printf("use_mask = true\n");}
+                    else{printf("use_mask = false\n");}
+                    
+                    if(has_mask) {printf("has_mask = true\n");}
+                    else{printf("has_mask = false\n");}
+                
+                    print_fasta(use_mask && has_mask);
+                }
                 else if (out_type == MASKED_FASTA) { print_fasta(use_mask && has_mask); }
                 else if (out_type == UNMASKED_FASTA) { print_fasta(0); }
                 else if (out_type == FASTQ)
