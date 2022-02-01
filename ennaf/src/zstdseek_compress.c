@@ -367,7 +367,17 @@ size_t ZSTD_seekable_endStream(ZSTD_seekable_CStream* zcs, ZSTD_outBuffer* outpu
     zcs->writingSeekTable = 1;
 
     size_t out = ZSTD_seekable_writeSeekTable(&zcs->framelog, output);
-    printf("cc   ZSTD_seekable_endStream() -> output.pos = %li\n", output->pos);
+    printf("cc   ZSTD_seekable_endStream() -> output.pos = %li      output.size = %li\n", output->pos, output->size);
+    
+    for(size_t i = 0; i < output->pos; i++) {
+        //printf("[%i]",  ((BYTE*)output->dst)[i] );
+        printf("%#02x ",  ((BYTE*)output->dst)[i] );
+        
+        if(i % 4 == 3) {printf("   ");}
+    }
+    printf("\n");
+    //out->dst
+    //#printf("%#010x\n", i);
 
 
     return out;

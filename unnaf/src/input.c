@@ -43,8 +43,11 @@ static void read_header(void)
     format_version = fgetc_or_incomplete(IN);
     if (format_version < 1 || format_version > 2) { die("unknown version (%d) of NAF format\n", format_version); }
 
+
+    printf("checkpoint version 01: %i\n", format_version);
     if (format_version > 1)
     {
+        printf("checkpoint version 02\n");
         unsigned char t = fgetc_or_incomplete(IN);
         if (t == 1)
         {
@@ -62,6 +65,8 @@ static void read_header(void)
             in_seq_type_name = "text";
         }
         else { die("unknown sequence type (%d) found in NAF file\n", t); }
+        
+        printf("t = %i [%s]\n",t, in_seq_type_name);
     }
 
     unsigned char flags = fgetc_or_incomplete(IN);
@@ -74,11 +79,13 @@ static void read_header(void)
     has_data    = (flags >> 1) & 1;
     has_quality =  flags       & 1;
     
-    if(has_data) {
-        printf("cc   has_data = true\n");
-    } else {
-        printf("cc   has_data = false\n");
-    }
+    if(has_title) { printf("cc   flags: has_title = true\n"); } else { printf("cc   flags: has_title = false\n"); }
+    if(has_ids) { printf("cc   flags: has_ids = true\n"); } else { printf("cc   flags: has_ids = false\n"); }
+    if(has_names) { printf("cc   flags: has_names = true\n"); } else { printf("cc   flags: has_names = false\n"); }
+    if(has_lengths) { printf("cc   flags: has_lengths = true\n"); } else { printf("cc   flags: has_lengths = false\n"); }
+    if(has_mask) { printf("cc   flags: has_mask = true\n"); } else { printf("cc   flags: has_mask = false\n"); }
+    if(has_data) { printf("cc   flags: has_data = true\n"); } else { printf("cc   flags: has_data = false\n"); }
+    if(has_quality) { printf("cc   flags: has_quality = true\n"); } else { printf("cc   flags: has_quality = false\n"); }
 
     name_separator = fgetc_or_incomplete(IN);
     if (name_separator < 0x20 || name_separator > 0x7E) { die("unsupported name separator character\n"); }
