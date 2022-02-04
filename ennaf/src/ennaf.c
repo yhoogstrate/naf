@@ -12,6 +12,11 @@
 #include "encoders.h"
 #include "tables.c"
 
+#include "zstd_seekable_utils.h"
+#include "zstdseek_compress.c"
+#include "zstdseek_utils.c"
+
+
 #define UNCOMPRESSED_BUFFER_SIZE (1ull * 1000 * 1000)
 #define COMPRESSED_BUFFER_SIZE (2ull * 1000 * 1000)
 
@@ -101,7 +106,8 @@ typedef struct {
     unsigned long long uncompressed_size;
     unsigned long long compressed_size;
     unsigned long long written;
-    ZSTD_CStream *cstream;
+    //ZSTD_CStream *cstream;
+    ZSTD_seekable_CStream *cstream;
     FILE *file;
     char *path;
     unsigned char *buf;
