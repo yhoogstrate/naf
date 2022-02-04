@@ -203,7 +203,7 @@ static void load_names(void)
     compressed_names_buffer = (unsigned char *) malloc_or_die(compressed_names_size + 4);
     put_magic_number(compressed_names_buffer);
     if (fread(compressed_names_buffer + 4, 1, compressed_names_size, IN) != compressed_names_size) { incomplete(); }
-
+    
     size_t n_dec_bytes = ZSTD_decompress( (void*)names_buffer, names_size, (void*)compressed_names_buffer, compressed_names_size + 4);
     printf("cc   ZSTD_decompress() [load_names] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != names_size) { die("can't decompress names\n"); }
@@ -261,26 +261,43 @@ static void load_lengths(void)
 
 static void load_mask(void)
 {
+    printf("\n\n   load mask\n");
     mask_size = read_number(IN);
     printf("mask_size = %lli\n", mask_size);
     unsigned long long compressed_mask_size = read_number(IN);
+    printf("compressed_mask_size = %lli\n", compressed_mask_size);
 
     mask_buffer = (unsigned char *) malloc_or_die(mask_size);
     compressed_mask_buffer = (unsigned char *) malloc_or_die(compressed_mask_size + 4);
     put_magic_number(compressed_mask_buffer);
-    if (fread(compressed_mask_buffer + 4, 1, compressed_mask_size, IN) != compressed_mask_size) { incomplete(); }
     
+    if(mask_size == 0) {
+        if (fread(compressed_mask_buffer , 1, compressed_mask_size, IN) != compressed_mask_size) { incomplete(); }
+    }
+    else {
+        if (fread(compressed_mask_buffer + 4, 1, compressed_mask_size, IN) != compressed_mask_size) { incomplete(); }
+    }
+    
+    
+    // print compressed data
+    for(size_t i = 0; i < compressed_mask_size; i++ )
+    {
+        printf("%#02x ", compressed_mask_buffer[i] );
+    }
+    printf("\n");
 
-
-    size_t n_dec_bytes = ZSTD_decompress( (void*)mask_buffer, mask_size, (void*)compressed_mask_buffer, compressed_mask_size + 4);
+    size_t n_dec_bytes;
+    if(mask_size == 0) {
+        n_dec_bytes = ZSTD_decompress( (void*)mask_buffer, mask_size, (void*)compressed_mask_buffer, compressed_mask_size );
+    }
+    else {
+        n_dec_bytes = ZSTD_decompress( (void*)mask_buffer, mask_size, (void*)compressed_mask_buffer, compressed_mask_size + 4);
+    }
+    
     printf("cc   ZSTD_decompress() [load_mask] -> n_dec_bytes = %li\n",n_dec_bytes);
     if (n_dec_bytes != mask_size) { die("can't decompress mask\n"); }
     
-    for(size_t i = 0; i < n_dec_bytes; i++ )
-    {
-        printf("[%i]", (int) compressed_lengths_buffer[i] );
-    }
-    printf("\n");
+
 
     free(compressed_mask_buffer);
     compressed_mask_buffer = 0;
