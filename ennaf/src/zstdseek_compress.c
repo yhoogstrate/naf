@@ -236,6 +236,7 @@ size_t ZSTD_seekable_compressStream(ZSTD_seekable_CStream* zcs, ZSTD_outBuffer* 
     size_t inLen = input->size - input->pos;
 
     printf("cc   ZSTD_seekable_compressStream(inLen = %li)\n", inLen);
+    printf("output->pos = %i\n", output->pos);
 
     inLen = MIN(inLen, (size_t)(zcs->maxFrameSize - zcs->frameDSize));
 
@@ -255,17 +256,24 @@ size_t ZSTD_seekable_compressStream(ZSTD_seekable_CStream* zcs, ZSTD_outBuffer* 
 
         input->pos += inTmp.pos;
 
+        printf("output->pos[a] = %i\n", output->pos);
+
         if (ZSTD_isError(ret)) return ret;
     }
 
     if (zcs->maxFrameSize == zcs->frameDSize) {
         /* log the frame and start over */
         size_t const ret = ZSTD_seekable_endFrame(zcs, output);
+        
+        printf("output->pos[b] = %i\n", output->pos);
+        
         if (ZSTD_isError(ret)) return ret;
 
         /* get the client ready for the next frame */
         return (size_t)zcs->maxFrameSize;
     }
+    
+    printf("output->pos[c] = %i\n", output->pos);
 
     return (size_t)(zcs->maxFrameSize - zcs->frameDSize);
 }
@@ -308,12 +316,23 @@ size_t ZSTD_seekable_writeSeekTable(ZSTD_frameLog* fl, ZSTD_outBuffer* output)
      * because of a small buffer, it can keep going where it left off.
      */
 
+    printf("fl->size = %i\n", fl->size);
+
+    printf("output->pos: %i\n", output->pos);
     size_t const sizePerFrame = 8 + (fl->checksumFlag?4:0);
+    printf("output->pos: %i\n", output->pos);
     size_t const seekTableLen = ZSTD_seekable_seekTableSize(fl);
+    printf("output->pos: %i\n", output->pos);
 
     CHECK_Z(ZSTD_stwrite32(fl, output, ZSTD_MAGIC_SKIPPABLE_START | 0xE, 0));
     assert(seekTableLen <= (size_t)UINT_MAX);
+    printf("output->pos: %i\n", output->pos);
     CHECK_Z(ZSTD_stwrite32(fl, output, (U32)seekTableLen - ZSTD_SKIPPABLEHEADERSIZE, 4));
+    
+    printf("output->pos: %i\n", output->pos);
+    
+    printf("fl->seekTableIndex = %i\n", fl->seekTableIndex);
+    printf("seekTableLen = %i\n", seekTableLen);
 
     while (fl->seekTableIndex < fl->size) {
         unsigned long long const start = ZSTD_SKIPPABLEHEADERSIZE + sizePerFrame * fl->seekTableIndex;
@@ -357,17 +376,29 @@ size_t ZSTD_seekable_writeSeekTable(ZSTD_frameLog* fl, ZSTD_outBuffer* output)
 
 size_t ZSTD_seekable_endStream(ZSTD_seekable_CStream* zcs, ZSTD_outBuffer* output)
 {
-    if (!zcs->writingSeekTable && zcs->frameDSize) {
+    printf("output->pos ~ a = %i\n", output->pos);
+    printf("zcs->writingSeekTable = ");
+    if(zcs->writingSeekTable) {printf("true;");} else {printf("false;");}
+    printf("   zcs->frameDSize = %i\n", zcs->frameDSize);
+    
+    if (!zcs->writingSeekTable) {
         const size_t endFrame = ZSTD_seekable_endFrame(zcs, output);
         if (ZSTD_isError(endFrame)) return endFrame;
         /* return an accurate size hint */
         if (endFrame) return endFrame + ZSTD_seekable_seekTableSize(&zcs->framelog);
     }
 
+    printf("output->pos ~ b = %i\n", output->pos);
+
     zcs->writingSeekTable = 1;
+
+    printf("output->pos ~ c = %i\n", output->pos);
 
     size_t out = ZSTD_seekable_writeSeekTable(&zcs->framelog, output);
     printf("cc   ZSTD_seekable_endStream() -> output.pos = %li      output.size = %li\n", output->pos, output->size);
+    
+    printf("output->pos ~ d = %i\n", output->pos);
+
     
     for(size_t i = 0; i < output->pos; i++) {
         //printf("[%i]",  ((BYTE*)output->dst)[i] );
@@ -378,6 +409,8 @@ size_t ZSTD_seekable_endStream(ZSTD_seekable_CStream* zcs, ZSTD_outBuffer* outpu
     printf("\n");
     //out->dst
     //#printf("%#010x\n", i);
+    
+    printf("output->pos ~ e = %i\n", output->pos);
 
 
     return out;
