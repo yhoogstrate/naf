@@ -83,6 +83,7 @@ static void compressor_end_stream(compressor_t *w)
         if (remainingToFlush != 0) { die("can't end zstd stream\n"); }
         w->fill += output.pos;
         w->compressed_size += output.pos;
+        ZSTD_freeCStream(w->cstream);
         w->cstream = NULL;
 
         if (keep_temp_files)
@@ -119,6 +120,12 @@ static void compressor_done(compressor_t *w)
 __attribute__((always_inline))
 static inline void compress(compressor_t *w, const void *data, size_t size)
 {
+    if(w == &MD5S) {
+        printf("MD5S compress, writing bytes: %i\n", size);
+    } else if(w == &SEQ) {
+        printf("SEQ compress, writing bytes: %i\n", size);
+    }
+    
     assert(w != NULL);
     assert(data != NULL);
     assert(w->buf != NULL);
@@ -170,4 +177,6 @@ static void write_compressed_data(FILE *F, compressor_t *w)
         copy_file_to_out(w->file, w->path, 4, w->written - 4);
         if (w->fill > 0) { fwrite_or_die(w->buf, 1, w->fill, F); }
     }
+    
+    assert(w->cstream == NULL);
 }

@@ -8,7 +8,7 @@ ifeq ($(origin CC),default)
 CC = gcc
 endif
 
-CFLAGS = -std=gnu99 -Wall -Wextra -O3 -march=native -ffast-math -s -I../zstd/lib
+CFLAGS = -std=gnu99 -Wall -Wextra -O3 -march=native -ffast-math -s -I../zstd/lib -lcrypto
 LDFLAGS = ../zstd/lib/libzstd.a
 
 .PHONY: default all clean install uninstall

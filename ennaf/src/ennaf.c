@@ -91,6 +91,7 @@ static unsigned long long n_sequences = 0ull;
 static bool *is_unexpected_arr = is_unexpected_dna_arr;
 static bool abort_on_unexpected_code = false;
 static bool assume_well_formed_input = false;
+static bool store_md5sums = false;// ideal behaviour would be to enanble this for FASTA and disable this for FASTQ by default?
 
 static size_t out_4bit_buffer_size = 0;
 static size_t zstd_stream_recommended_out_buffer_size = 0;
@@ -113,6 +114,7 @@ compressor_t LEN  = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
 compressor_t MASK = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
 compressor_t SEQ  = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
 compressor_t QUAL = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL };
+compressor_t MD5S = { 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL }; // only init pointers when md5sums need to be stored
 
 static bool success = false;
 
@@ -136,11 +138,16 @@ static void done(void)
     compressor_done(&MASK);
     compressor_done(&SEQ);
     compressor_done(&QUAL);
+    compressor_done(&MD5S);
 
     FREE(name.data);
     FREE(comment.data);
     FREE(seq.data);
     FREE(qual.data);
+    if(store_md5sums) {
+        FREE(md5sum_digest.data);
+        FREE(md5sum_hash_s.data);
+    }
 
     FREE(in_buffer);
     FREE(out_4bit_buffer);
@@ -347,6 +354,7 @@ static void show_help(void)
         "  --protein          - Input sequence is protein\n"
         "  --text             - Input sequence is text\n"
         "  --strict           - Fail on unexpected input characters\n"
+        "  --store-md5sums    - Store per-sequence md5sums campatible with CRAM/BAM\n"
         "  --line-length N    - Override line length to N\n"
         "  --verbose          - Verbose mode\n"
         "  --keep-temp-files  - Keep temporary files\n"
@@ -395,6 +403,7 @@ static void parse_command_line(int argc, char **argv)
                 if (!strcmp(argv[i], "--text")) { in_seq_type = seq_type_text; continue; }
                 if (!strcmp(argv[i], "--well-formed")) { assume_well_formed_input = true; continue; }
                 if (!strcmp(argv[i], "--strict")) { abort_on_unexpected_code = true; continue; }
+                if (!strcmp(argv[i], "--store-md5sums")) { store_md5sums = true; continue; }
             }
 
             if (i < argc - 1)
@@ -504,6 +513,11 @@ int main(int argc, char **argv)
     if (store_mask) { compressor_init(&MASK, "mask", 0); }
     compressor_init(&SEQ, "sequence", sequence_window_size_log);
     if (store_qual) { compressor_init(&QUAL, "quality", 0); }
+    if (store_md5sums)
+    {
+        printf("flush/re-init md5 hash\n");        
+        compressor_init(&MD5S, "md5sums", 0);
+    }
 
     process();
     close_input_file();
@@ -528,12 +542,23 @@ int main(int argc, char **argv)
         compress(&SEQ, out_4bit_buffer, (size_t)(out_4bit_pos - out_4bit_buffer));
     }
 
+    if(store_md5sums)
+    {
+        printf("presumably writing md5 hashes to MD5S\n");
+        printf("md5sum_hash_s.size = %i\n", md5sum_hash_s.length);
+        //compress(&MD5S);
+    }
+
     compressor_end_stream(&IDS);
     compressor_end_stream(&COMM);
     compressor_end_stream(&LEN);
     compressor_end_stream(&MASK);
     compressor_end_stream(&SEQ);
     compressor_end_stream(&QUAL);
+    if(store_md5sums)
+    {
+        compressor_end_stream(&MD5S);
+    }
 
     fwrite_or_die(naf_magic_number, 1, 3, OUT);
 
@@ -542,7 +567,12 @@ int main(int argc, char **argv)
     if (in_seq_type == seq_type_dna) { fputc_or_die(1, OUT); }
     else { fputc_or_die(2, OUT); fputc_or_die(in_seq_type, OUT); }
 
-    fputc_or_die( (0           << 7) |   // extended format
+    int extended_f = 0;
+    if(store_md5sums) // or other meta features, to implement later
+    {
+        extended_f = 1;
+    }
+    fputc_or_die( (extended_f  << 7) |   // extended format
                   (store_title << 6) |   // title
                   (1           << 5) |   // ids
                   (1           << 4) |   // comments
@@ -586,6 +616,16 @@ int main(int argc, char **argv)
     {
         write_variable_length_encoded_number(OUT, QUAL.uncompressed_size);
         write_compressed_data(OUT, &QUAL);
+    }
+
+    if(extended_f != 0)
+    {
+        // some layout for metadata blocks
+
+        if(store_md5sums)
+        {
+            write_compressed_data(OUT, &MD5S);
+        }
     }
 
     if (out_file_path != NULL && have_input_stat) { close_output_file_and_set_stat(); }
